@@ -1,21 +1,30 @@
 package com.example.course.gui;
 
+import java.io.IOException;
 import java.net.URL;
 import java.util.List;
 import java.util.ResourceBundle;
 
 import com.example.course.App;
+import com.example.course.gui.util.Alerts;
+import com.example.course.gui.util.Utils;
 import com.example.course.model.entities.Department;
 import com.example.course.model.services.DepartmentService;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.scene.control.Alert.AlertType;
+import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.layout.Pane;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 
 public class DepartmentListController implements Initializable {
@@ -37,8 +46,9 @@ public class DepartmentListController implements Initializable {
     private ObservableList<Department> obsList;
 
     @FXML
-    public void onBtNewAction() {
-        System.out.println("onBtNewAction");
+    public void onBtNewAction(ActionEvent event) {
+        Stage parentStage = Utils.currentStage(event); 
+        createDialogForm("/com/example/course/gui/DepartmentForm.fxml", parentStage);
     }
 
     public void setDepartmentService(DepartmentService service) {
@@ -65,5 +75,23 @@ public class DepartmentListController implements Initializable {
         List<Department> departments = service.findAll();
         obsList = FXCollections.observableArrayList(departments);
         tableViewDepartment.setItems(obsList);
+    }
+
+    private void createDialogForm(String absoluteName, Stage parentStage) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource(absoluteName));
+            Pane pane = loader.load();
+
+            Stage dialogStage = new Stage();
+            dialogStage.setTitle("Enter department data");
+            dialogStage.setScene(new Scene(pane));
+            dialogStage.setResizable(false);
+            dialogStage.initOwner(parentStage);
+            dialogStage.initModality(Modality.WINDOW_MODAL);
+            dialogStage.showAndWait();
+        } 
+        catch (IOException e) {
+            Alerts.showAlert("IO Exception", "Error loading view", e.getMessage(), AlertType.ERROR);
+        }
     }
 }
