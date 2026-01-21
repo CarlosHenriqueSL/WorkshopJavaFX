@@ -3,7 +3,9 @@ package com.example.course.gui;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.ResourceBundle;
+import java.util.Set;
 
 import com.example.course.db.DbException;
 import com.example.course.gui.listeners.DataChangeListener;
@@ -11,6 +13,7 @@ import com.example.course.gui.util.Alerts;
 import com.example.course.gui.util.Constraints;
 import com.example.course.gui.util.Utils;
 import com.example.course.model.entities.Department;
+import com.example.course.model.exceptions.ValidationException;
 import com.example.course.model.services.DepartmentService;
 
 import javafx.event.ActionEvent;
@@ -73,6 +76,9 @@ public class DepartmentFormController implements Initializable {
         catch (DbException e) {
             Alerts.showAlert("Error saving object", null, e.getMessage(), AlertType.ERROR);
         }
+        catch (ValidationException e) {
+            setErrorMessages(e.getErrors());
+        }
     }
 
     private void notifyDataChangeListeners() {
@@ -83,8 +89,20 @@ public class DepartmentFormController implements Initializable {
 
     private Department getFormData() {
         Department department = new Department();
+
+        ValidationException exception = new ValidationException("Validation error");
+
         department.setId(Utils.tryParseToInt(txtId.getText()));
+
+        if (txtName.getText() == null || txtName.getText().trim().equals("")) {
+            exception.addError("name", "Field can't be empty");
+        }
+
         department.setName(txtName.getText());
+
+        if (exception.getErrors().size() > 0) {
+            throw exception;
+        }
 
         return department;
     }
@@ -111,5 +129,13 @@ public class DepartmentFormController implements Initializable {
 
         txtId.setText(String.valueOf(entity.getId()));
         txtId.setText(entity.getName());
+    }
+
+    private void setErrorMessages(Map<String, String> errors) {
+        Set<String> fields = errors.keySet();
+
+        if (fields.contains("name")) {
+            labelErrorName.setText(errors.get("name"));
+        }
     }
 }
